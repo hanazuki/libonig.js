@@ -1,19 +1,26 @@
 #include <emscripten/bind.h>
 #include <string>
 #include <utility>
+#include <vector>
 #include "oniguruma.h"
 
 namespace onigjs {
   namespace {
-    std::pair<UChar const *, UChar const *> string_range(std::string const &s) {
-      return {reinterpret_cast<UChar const *>(&s.c_str()[0]),
-          reinterpret_cast<UChar const *>(&s.c_str()[s.size()])};
+    template<typename T, typename A>
+    std::pair<UChar const *, UChar const *> uchar_range(std::vector<T, A> const &v) {
+      return {reinterpret_cast<UChar const *>(v.data()),
+          reinterpret_cast<UChar const *>(v.data() + v.size())};
+    }
+
+    std::vector<char16_t> repack_utf16(std::wstring const &s) {
+      return std::vector<char16_t>(s.begin(), s.end());
     }
   }
 
   struct MatchResult {
-    int offset;
-    int size;
+    bool matched;
+    size_t offset;
+    size_t size;
   };
 
   struct RegExpOptions {
@@ -58,21 +65,22 @@ namespace onigjs {
   };
 
   class RegExp {
-    std::string const pattern;
+    std::wstring const pattern;
     OnigRegex regex;
     OnigRegion region;
     RegExpOptions const options;
 
   public:
-    RegExp(std::string const &pattern, std::string const &flags):
+    RegExp(std::wstring const &pattern, std::string const &flags):
       pattern(pattern), regex(nullptr), region(), options(flags) {
-
-      auto pattern_range = string_range(pattern);
+      auto pattern16 = repack_utf16(pattern);
+      auto pattern_range = uchar_range(pattern16);
 
       OnigErrorInfo errinfo;
       auto err = onig_new(&regex, pattern_range.first, pattern_range.second,
-                 options.asCompileOptions(), &OnigEncodingUTF8, &OnigSyntaxRuby,
-                 &errinfo);
+                          options.asCompileOptions(),
+                          &OnigEncodingUTF16_LE,
+                          &OnigSyntaxRuby, &errinfo);
 
       if(err != ONIG_NORMAL) {
         UChar errbuf[ONIG_MAX_ERROR_MESSAGE_LEN];
@@ -88,18 +96,19 @@ namespace onigjs {
       onig_region_free(&region, false);
     }
 
-    MatchResult exec(std::string const &target) {
-      auto target_range = string_range(target);
+    MatchResult exec(std::wstring const &target) {
+      auto target16 = repack_utf16(target);
+      auto target_range = uchar_range(target16);
 
       auto position = onig_search(regex, target_range.first, target_range.second,
                                   target_range.first, target_range.second,
                                   &region, ONIG_OPTION_NONE);
 
       if(position == ONIG_MISMATCH) {
-        return {-1, 0};
+        return {false, 0, 0};
       } else {
         auto length = region.end[0] - region.beg[0];
-        return {position, length};
+        return {true, position / sizeof(char16_t), length / sizeof(char16_t)};
       }
     }
 
@@ -115,7 +124,7 @@ namespace onigjs {
       return options.multiline;
     }
 
-    std::string source() const {
+    std::wstring source() const {
       return pattern;
     }
 
@@ -132,12 +141,13 @@ namespace onigjs {
 using namespace emscripten;
 EMSCRIPTEN_BINDINGS(onigjs) {
   value_object<onigjs::MatchResult>("MatchResult")
+    .field("matched", &onigjs::MatchResult::matched)
     .field("offset", &onigjs::MatchResult::offset)
     .field("size", &onigjs::MatchResult::size)
     ;
 
   class_<onigjs::RegExp>("RegExp")
-    .constructor<std::string, std::string>()
+    .constructor<std::wstring, std::string>()
     .function("exec", &onigjs::RegExp::exec)
     .property("global", &onigjs::RegExp::global)
     .property("ignoreCase", &onigjs::RegExp::ignoreCase)
