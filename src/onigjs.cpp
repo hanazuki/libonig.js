@@ -79,7 +79,7 @@ namespace onigjs {
       OnigErrorInfo errinfo;
       auto err = onig_new(&regex, pattern_range.first, pattern_range.second,
                           options.asCompileOptions(),
-                          &OnigEncodingUTF16_LE,
+                          &OnigEncodingUTF16_LE, // assuming compiler endianness...
                           &OnigSyntaxRuby, &errinfo);
 
       if(err != ONIG_NORMAL) {
