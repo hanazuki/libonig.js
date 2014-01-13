@@ -10,12 +10,12 @@ comma=,
 
 .PHONY: all
 
-all: libonig.js
+all: onig.js
 
 src/onigjs.o: src/onigjs.cpp vendor/include/oniguruma.h
 	${EMCXX} ${EMCXXFLAGS} -Ivendor/include --bind -c -o $@ $<
 
-libonig.js: src/onigjs.o vendor/lib/libonig.a
+onig.js: src/onigjs.o vendor/lib/libonig.a
 	EMCC_CLOSURE_ARGS="--output_wrapper '(function(){%output%})()'" \
 	  ${EM} ${EMFLAGS} --bind --post-js src/libonig_export.js -o $@ $^
 
