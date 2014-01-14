@@ -10,24 +10,25 @@ comma=,
 
 .PHONY: all
 
-all: onig.js
+all: libonig.js
 
 src/onigjs.o: src/onigjs.cpp vendor/include/oniguruma.h
 	${EMCXX} ${EMCXXFLAGS} -Ivendor/include --bind -c -o $@ $<
 
-onig.js: src/onigjs.o vendor/lib/libonig.a src/libonig_export.js src/libonig_license.js
-	EMCC_CLOSURE_ARGS="--output_wrapper '(function(){%output%})()'" \
-	  ${EM} ${EMFLAGS} --bind -o $@ \
-	  --pre-js src/libonig_license.js --post-js src/libonig_export.js \
-	  src/onigjs.o vendor/lib/libonig.a
+libonig_.js: src/onigjs.o vendor/lib/libonig.a
+	EMCC_CLOSURE_ARGS="--output_wrapper 'var libonig={};(function(Module){%output%})(libonig)'" \
+	  ${EM} ${EMFLAGS} --bind -o $@ $^
+
+libonig.js: libonig_license.js libonig_.js
+	cat $^ > $@
 
 vendor/lib/libonig.a vendor/include/oniguruma.h: libonig
 
-src/libonig_license.js: LICENSE vendor/libonig/COPYING
+libonig_license.js: LICENSE vendor/libonig/COPYING
 	( echo '/**'; \
-	  ( echo '@license'; echo; \
+	  ( echo '@license libonig.js copyright notice'; echo; \
 	    cat LICENSE; echo; echo; \
-	    sed 's|^.[*].||' vendor/libonig/COPYING) | sed 's|^| * |; s| $$||'; \
+	    sed 's|^.[*].\{0,1\}||' vendor/libonig/COPYING) | sed 's|^| * |; s| $$||'; \
 	  echo ' */') > $@
 
 .PHONY: libonig
