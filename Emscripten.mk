@@ -9,7 +9,6 @@ space=$(eval) $(eval)
 comma=,
 
 .PHONY: all
-
 all: libonig.js
 
 src/onigjs.o: src/onigjs.cpp vendor/include/oniguruma.h
@@ -22,7 +21,10 @@ libonig_.js: src/onigjs.o vendor/lib/libonig.a
 libonig.js: libonig_license.js libonig_.js
 	cat $^ > $@
 
-vendor/lib/libonig.a vendor/include/oniguruma.h: libonig
+vendor/lib/libonig.a vendor/include/oniguruma.h:
+	cd vendor/libonig; \
+	  ${EMCONFIGURE} ./configure --prefix=/src/vendor --disable-shared && \
+	  ${EMMAKE} ${MAKE} install
 
 libonig_license.js: LICENSE vendor/libonig/COPYING
 	( echo '/**'; \
@@ -30,12 +32,6 @@ libonig_license.js: LICENSE vendor/libonig/COPYING
 	    cat LICENSE; echo; echo; \
 	    sed 's|^.[*].\{0,1\}||' vendor/libonig/COPYING) | sed 's|^| * |; s| $$||'; \
 	  echo ' */') > $@
-
-.PHONY: libonig
-libonig:
-	cd vendor/libonig; \
-	  ${EMCONFIGURE} ./configure --prefix=/src/vendor --disable-shared && \
-	  ${EMMAKE} ${MAKE} install
 
 .PHONY: clean libonig-clean
 clean: libonig-clean
