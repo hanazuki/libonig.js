@@ -1,6 +1,6 @@
 EM=emcc
 EMCXX=em++
-EMFLAGS=-O1 --closure 1
+EMFLAGS=-O2 --js-opts 0 --closure 1
 EMCXXFLAGS=-O2 -Wall -Wextra -Werror
 EMMAKE=emmake
 EMCONFIGURE=emconfigure
