@@ -21,8 +21,7 @@ onig.js: src/onigjs.o vendor/lib/libonig.a src/libonig_export.js src/libonig_lic
 	  --pre-js src/libonig_license.js --post-js src/libonig_export.js \
 	  src/onigjs.o vendor/lib/libonig.a
 
-vendor/lib/libonig.a vendor/include/oniguruma.h:
-	libonig
+vendor/lib/libonig.a vendor/include/oniguruma.h: libonig
 
 src/libonig_license.js: LICENSE vendor/libonig/COPYING
 	( echo '/**'; \
