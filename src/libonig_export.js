@@ -1,1 +1,1 @@
-window['libonig']=Module;
+Function("return this")()['libonig']=Module;
