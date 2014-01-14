@@ -1,2 +1,3 @@
 *.o
 /onig.js
+/src/libonig_license.js

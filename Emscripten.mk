@@ -15,13 +15,21 @@ all: onig.js
 src/onigjs.o: src/onigjs.cpp vendor/include/oniguruma.h
 	${EMCXX} ${EMCXXFLAGS} -Ivendor/include --bind -c -o $@ $<
 
-onig.js: src/onigjs.o vendor/lib/libonig.a src/libonig_export.js
+onig.js: src/onigjs.o vendor/lib/libonig.a src/libonig_export.js src/libonig_license.js
 	EMCC_CLOSURE_ARGS="--output_wrapper '(function(){%output%})()'" \
-	  ${EM} ${EMFLAGS} --bind --post-js src/libonig_export.js -o $@ \
+	  ${EM} ${EMFLAGS} --bind -o $@ \
+	  --pre-js src/libonig_license.js --post-js src/libonig_export.js \
 	  src/onigjs.o vendor/lib/libonig.a
 
 vendor/lib/libonig.a vendor/include/oniguruma.h:
 	libonig
+
+src/libonig_license.js: LICENSE vendor/libonig/COPYING
+	( echo '/**'; \
+	  ( echo '@license'; echo; \
+	    cat LICENSE; echo; echo; \
+	    sed 's|^.[*].||' vendor/libonig/COPYING) | sed 's|^| * |; s| $$||'; \
+	  echo ' */') > $@
 
 .PHONY: libonig
 libonig:
