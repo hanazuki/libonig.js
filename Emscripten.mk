@@ -23,7 +23,7 @@ libonig.js: libonig_license.js libonig_.js
 
 vendor/lib/libonig.a vendor/include/oniguruma.h:
 	cd vendor/libonig; \
-	  ${EMCONFIGURE} ./configure --prefix=/src/vendor --disable-shared && \
+	  ${EMCONFIGURE} ./configure --prefix=${PWD}/vendor --disable-shared && \
 	  ${EMMAKE} ${MAKE} install
 
 libonig_license.js: LICENSE vendor/libonig/COPYING
