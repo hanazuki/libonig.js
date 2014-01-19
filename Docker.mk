@@ -6,8 +6,8 @@ DOCKER_IMAGE=hanazuki/ubuntu-emscripten
 
 all:
 	${DOCKER} ${DOCKER_FLAGS} run -rm -v ${PWD}:/src ${DOCKER_IMAGE} \
-	  make -f Emscripten.mk all
+	  make all
 
 clean:
 	${DOCKER} ${DOCKER_FLAGS} run -rm -v ${PWD}:/src ${DOCKER_IMAGE} \
-	  make -f Emscripten.mk clean
+	  make clean
